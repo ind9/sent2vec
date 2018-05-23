@@ -606,7 +606,7 @@ std::priority_queue<std::pair<real, std::string>> FastText::getNNSent(const Matr
   Vector vec(args_->dim);
 
   for (int32_t i = 0; i < numSent; i++) {
-    std::string sentence = std::to_string(i) + " " + sentences[i];
+    std::string sentence = sentences[i];
     real dp = sentenceVectors.dotRow(queryVec, i);
     heap.push(std::make_pair(dp / queryNorm, sentence));
   }
