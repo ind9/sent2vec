@@ -17,7 +17,6 @@
 #include <thread>
 #include <string>
 #include <vector>
-#include <queue>
 #include <algorithm>
 #include <stdio.h>
 
@@ -596,6 +595,26 @@ void FastText::findNNSent(const Matrix& sentenceVectors, const Vector& queryVec,
 }
 
 
+std::priority_queue<std::pair<real, std::string>> FastText::getNNSent(const Matrix& sentenceVectors, const Vector& queryVec,
+                          int32_t k, const std::set<std::string>& banSet, int64_t numSent,
+                          const std::vector<std::string>& sentences) {
+  real queryNorm = queryVec.norm();
+  if (std::abs(queryNorm) < 1e-8) {
+    queryNorm = 1;
+  }
+  std::priority_queue<std::pair<real, std::string>> heap;
+  Vector vec(args_->dim);
+
+  for (int32_t i = 0; i < numSent; i++) {
+    std::string sentence = std::to_string(i) + " " + sentences[i];
+    real dp = sentenceVectors.dotRow(queryVec, i);
+    heap.push(std::make_pair(dp / queryNorm, sentence));
+  }
+
+  return heap;
+}
+
+
 void FastText::nn(int32_t k) {
   std::string queryWord;
   Vector queryVec(args_->dim);
@@ -680,6 +699,26 @@ void FastText::nnSent(int32_t k, std::string filename) {
     std::cout << std::endl;
     std::cerr << "Query sentence? " << std::endl;
   }
+}
+
+std::priority_queue<std::pair<real, std::string>> FastText::nnSent(int32_t k, int32_t n, std::vector<std::string> &sentences, Matrix &sentenceVectors, std::istream& queryStr) {
+  Vector buffer(args_->dim), query(args_->dim);
+  std::vector<int32_t> line, labels;
+  std::set<std::string> banSet;
+
+  query.zero();
+  dict_->getLine(queryStr, line, labels, model_->rng);
+  dict_->addNgrams(line, args_->wordNgrams);
+  buffer.zero();
+  for (auto it = line.cbegin(); it != line.cend(); ++it) {
+    buffer.addRow(*input_, *it);
+  }
+  if (!line.empty()) {
+    buffer.mul(1.0 / line.size());
+  }
+  query.addVector(buffer, 1.0);
+
+  return getNNSent(sentenceVectors, query, k, banSet, n, sentences);
 }
 
 

@@ -18,6 +18,7 @@
 #include <atomic>
 #include <memory>
 #include <set>
+#include <queue>
 
 #include "args.h"
 #include "dictionary.h"
@@ -89,9 +90,13 @@ class FastText {
                 const std::set<std::string>&);
     void findNNSent(const Matrix&, const Vector&, int32_t,
                 const std::set<std::string>&, int64_t, const std::vector<std::string>&);
+    std::priority_queue<std::pair<real, std::string>> getNNSent(const Matrix& sentenceVectors, const Vector& queryVec,
+              int32_t k, const std::set<std::string>& banSet, int64_t numSent,
+              const std::vector<std::string>& sentences);
     void nn(int32_t);
     void analogies(int32_t);
     void nnSent(int32_t, std::string );
+    std::priority_queue<std::pair<real, std::string>> nnSent(int32_t k, int32_t n, std::vector<std::string> &sentences, Matrix &sentenceVectors, std::istream& queryStr);
     void analogiesSent(int32_t, std::string );
 
     void loadVectors(std::string);
